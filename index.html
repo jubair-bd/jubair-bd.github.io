@@ -9,23 +9,25 @@
     <style>
         body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif; }
         .card { background: #fff; width: 90%; max-width: 400px; padding: 40px 20px; border-radius: 30px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.05); }
-        .icon { width: 70px; height: 70px; background: #fff1f2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 20px; }
+        .icon { width: 70px; height: 70px; background: #fef2f2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 20px; }
         h1 { font-size: 22px; color: #0f172a; margin-bottom: 5px; font-weight: 800; }
         .clock { font-size: 40px; font-weight: 800; color: #334155; margin: 15px 0; font-family: monospace; }
         p { color: #64748b; font-size: 13px; line-height: 1.6; }
-        .checking { color: #3b82f6; font-weight: bold; }
+        #checkStatus { color: #3b82f6; font-weight: bold; margin-top: 15px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div id="statusIcon" class="icon"><i class="fas fa-sync fa-spin" style="color: #3b82f6;"></i></div>
-    <h1 id="statusTitle">Connecting...</h1>
+    <div class="icon"><i class="fas fa-server"></i></div>
+    <h1>সার্ভার বর্তমানে অফলাইন</h1>
     <div class="clock" id="liveClock">00:00:00</div>
-    <p id="statusMsg">সার্ভারের সাথে সংযোগ স্থাপন করা হচ্ছে, দয়া করে অপেক্ষা করুন।</p>
+    <p>আপনার কম্পিউটার বা ngrok বর্তমানে বন্ধ আছে। সার্ভার চালু হওয়া পর্যন্ত অপেক্ষা করুন।</p>
+    <span id="checkStatus">সংযোগ চেক করা হচ্ছে...</span>
 </div>
 
 <script>
+    // আপনার সঠিক ngrok লিঙ্ক (পুরোটা)
     const targetUrl = "https://flattery-launder-promoter.ngrok-free.dev/reseller-portal.html";
 
     // ১. লাইভ ঘড়ি
@@ -35,29 +37,35 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // ২. সার্ভার চেক ফাংশন
-    function checkServer() {
-        // fetch দিয়ে চেক করা হচ্ছে সার্ভার অনলাইন কি না
-        fetch(targetUrl, { mode: 'no-cors', cache: 'no-store' })
-        .then(() => {
-            // যদি রেসপন্স পাওয়া যায়, তবেই রিডাইরেক্ট করবে
-            window.location.href = targetUrl;
-        })
-        .catch(() => {
-            // যদি কানেকশন ফেইল হয় (পিসি অফ থাকে), তবে অফলাইন মেসেজ দেখাবে
-            document.getElementById('statusIcon').innerHTML = '<i class="fas fa-server"></i>';
-            document.getElementById('statusIcon').style.background = '#fef2f2';
-            document.getElementById('statusIcon').style.color = '#ef4444';
-            document.getElementById('statusTitle').innerText = "সার্ভার অফলাইন আছে";
-            document.getElementById('statusMsg').innerText = "আপনার পিসি বা ngrok বর্তমানে বন্ধ আছে। সার্ভার চালু হলে এই পেজটি অটোমেটিক রিলোড হবে।";
-        });
+    // ২. স্মার্ট কানেকশন চেক
+    function checkConnection() {
+        // ngrok অফলাইন পেজ চিনতে আমরা HEAD রিকোয়েস্ট পাঠাবো
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", targetUrl, true);
+        xhr.timeout = 5000; // ৫ সেকেন্ড সময় দিবে
+        
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4) {
+                // যদি পিসি অন থাকে এবং আপনার ওয়েবসাইট থেকে রেসপন্স পায়
+                // ngrok এরর পেজ সাধারণত নির্দিষ্ট টাইটেল দেয়, আমরা চেক ছাড়াই ট্রাই করতে পারি
+                if (xhr.status >= 200 && xhr.status < 400) {
+                     window.location.href = targetUrl;
+                }
+            }
+        };
+
+        xhr.onerror = function() {
+            document.getElementById('checkStatus').innerText = "সার্ভার অফলাইন (পুনরায় চেষ্টা করা হচ্ছে)";
+        };
+
+        xhr.send();
     }
 
-    // পেজ লোড হওয়ার ৫ সেকেন্ড পর চেক করবে (যাতে ব্রাউজার সেটেল হতে পারে)
-    setTimeout(checkServer, 2000);
-
-    // প্রতি ২০ সেকেন্ড পরপর অটো চেক করবে
-    setInterval(checkServer, 20000);
+    // প্রতি ১০ সেকেন্ড পরপর অটো চেক করবে
+    setInterval(checkConnection, 10000);
+    
+    // পেজ লোড হওয়ার ৫ সেকেন্ড পর প্রথম চেক
+    setTimeout(checkConnection, 5000);
 </script>
 
 </body>
