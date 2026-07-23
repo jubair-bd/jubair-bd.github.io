@@ -3,69 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checking Server Status | Jubair BD Portal</title>
+    <title>Server Status | JB Reseller</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center;
-            height: 100vh; background: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        .card {
-            background: #fff; width: 90%; max-width: 420px; padding: 40px 30px;
-            border-radius: 30px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
-        }
-        .icon-box {
-            width: 70px; height: 70px; line-height: 70px; border-radius: 50%;
-            font-size: 30px; margin: 0 auto 20px;
-        }
-        .offline .icon-box { background: #fef2f2; color: #ef4444; }
-        .online .icon-box { background: #f0fdf4; color: #10b981; }
-        h1 { font-size: 22px; color: #0f172a; margin-bottom: 8px; font-weight: 800; }
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .card { background: #fff; width: 90%; max-width: 400px; padding: 40px 20px; border-radius: 30px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.05); }
+        .icon { width: 70px; height: 70px; background: #fff1f2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 20px; }
+        h1 { font-size: 22px; color: #0f172a; margin-bottom: 5px; font-weight: 800; }
         .clock { font-size: 40px; font-weight: 800; color: #334155; margin: 15px 0; font-family: monospace; }
-        p { color: #64748b; font-size: 13px; line-height: 1.6; margin-bottom: 25px; }
-        .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } }
+        p { color: #64748b; font-size: 13px; line-height: 1.6; }
+        .checking { color: #3b82f6; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div id="iconBox" class="icon-box"><i class="fas fa-sync fa-spin"></i></div>
-    <h1 id="statusText">Connecting to Server<span class="loading-dots"></span></h1>
-    <div class="clock" id="liveClock"></div>
-    <p id="subText">দয়া করে কিছুক্ষণ অপেক্ষা করুন, আমরা সার্ভারের সাথে সংযোগ স্থাপন করার চেষ্টা করছি।</p>
+    <div id="statusIcon" class="icon"><i class="fas fa-sync fa-spin" style="color: #3b82f6;"></i></div>
+    <h1 id="statusTitle">Connecting...</h1>
+    <div class="clock" id="liveClock">00:00:00</div>
+    <p id="statusMsg">সার্ভারের সাথে সংযোগ স্থাপন করা হচ্ছে, দয়া করে অপেক্ষা করুন।</p>
 </div>
 
 <script>
-    const targetUrl = "https://flattery-launder-promoter.ngrok-free.dev";
+    const targetUrl = "https://flattery-launder-promoter.ngrok-free.dev/reseller-portal.html";
 
-    // লাইভ ঘড়ি
-    setInterval(() => {
+    // ১. লাইভ ঘড়ি
+    function updateClock() {
         document.getElementById('liveClock').innerText = new Date().toLocaleTimeString();
-    }, 1000);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    // সার্ভার চেক করার মূল ফাংশন
+    // ২. সার্ভার চেক ফাংশন
     function checkServer() {
+        // fetch দিয়ে চেক করা হচ্ছে সার্ভার অনলাইন কি না
         fetch(targetUrl, { mode: 'no-cors', cache: 'no-store' })
         .then(() => {
-            // যদি সার্ভার অনলাইন থাকে, তাহলে সাথে সাথে রিডাইরেক্ট করবে
+            // যদি রেসপন্স পাওয়া যায়, তবেই রিডাইরেক্ট করবে
             window.location.href = targetUrl;
         })
         .catch(() => {
-            // যদি সার্ভার অফলাইন থাকে, তাহলে মেসেজ দেখাবে
-            document.getElementById('iconBox').innerHTML = '<i class="fas fa-server"></i>';
-            document.getElementById('iconBox').parentElement.className = 'card offline';
-            document.getElementById('statusText').innerText = "সার্ভার বর্তমানে অফলাইন";
-            document.getElementById('subText').innerText = "আপনার কম্পিউটার বা ngrok বন্ধ থাকায় সফটওয়্যারটি ব্যবহার করা যাচ্ছে না। সার্ভার চালু হলে এটি অটোমেটিক রিলোড হবে।";
+            // যদি কানেকশন ফেইল হয় (পিসি অফ থাকে), তবে অফলাইন মেসেজ দেখাবে
+            document.getElementById('statusIcon').innerHTML = '<i class="fas fa-server"></i>';
+            document.getElementById('statusIcon').style.background = '#fef2f2';
+            document.getElementById('statusIcon').style.color = '#ef4444';
+            document.getElementById('statusTitle').innerText = "সার্ভার অফলাইন আছে";
+            document.getElementById('statusMsg').innerText = "আপনার পিসি বা ngrok বর্তমানে বন্ধ আছে। সার্ভার চালু হলে এই পেজটি অটোমেটিক রিলোড হবে।";
         });
     }
 
-    // প্রতি ১৫ সেকেন্ড পরপর চেক করবে
-    setInterval(checkServer, 15000);
-    // পেজ লোড হওয়ার সাথে সাথে একবার চেক করবে
-    checkServer();
+    // পেজ লোড হওয়ার ৫ সেকেন্ড পর চেক করবে (যাতে ব্রাউজার সেটেল হতে পারে)
+    setTimeout(checkServer, 2000);
+
+    // প্রতি ২০ সেকেন্ড পরপর অটো চেক করবে
+    setInterval(checkServer, 20000);
 </script>
 
 </body>
